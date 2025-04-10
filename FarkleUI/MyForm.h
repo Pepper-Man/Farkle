@@ -24,9 +24,6 @@ namespace FarkleUI {
 			InitializeComponent();
 			srand(time(NULL));
 			dynamicButtons = gcnew System::Collections::Generic::List<System::Windows::Forms::Button^>();
-
-			// Define allowed area for dice buttons
-			allowedArea = System::Drawing::Rectangle(100, 100, 500, 300);
 		}
 
 	protected:
@@ -131,7 +128,7 @@ namespace FarkleUI {
 		for (int i = 0; i < 6; i++)
 		{
 			Button^ newButton = gcnew Button();
-			newButton->Size = System::Drawing::Size(80, 40);
+			newButton->Size = System::Drawing::Size(90, 90);
 			diceArea->Controls->Add(newButton);
 
 			// Try to find a non-overlapping position
@@ -143,7 +140,7 @@ namespace FarkleUI {
 			do {
 				// Calc random position within panel
 				newPos = Point(
-					rand() & (diceArea->Width - newButton->Width),
+					rand() % (diceArea->Width - newButton->Width),
 					rand() % (diceArea->Height - newButton->Height)
 				);
 
@@ -164,9 +161,15 @@ namespace FarkleUI {
 			// Set button properties
 			newButton->Name = String::Format("button{0}", dynamicButtons->Count);
 			newButton->Location = newPos;
-			newButton->Size = System::Drawing::Size(100, 50);
 			newButton->Text = String::Format("{0}", rand() % 6 + 1);
-			newButton->BackColor = Color::FromArgb(rand() % 256, rand() % 256, rand() % 256);
+			newButton->Font = gcnew System::Drawing::Font(
+				newButton->Font->FontFamily, // Same font family
+				20.0f, // Font size
+				newButton->Font->Style // Keep same style
+			);
+			//newButton->BackColor = Color::FromArgb(rand() % 256, rand() % 256, rand() % 256);
+			newButton->BackColor = Color::Black;
+			newButton->ForeColor = Color::White;
 
 			// Add click handler
 			newButton->Click += gcnew EventHandler(this, &MyForm::DynamicButton_Click);
