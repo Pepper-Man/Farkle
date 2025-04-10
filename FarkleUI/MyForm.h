@@ -70,6 +70,8 @@ namespace FarkleUI {
 			// 
 			this->throwButton->Anchor = System::Windows::Forms::AnchorStyles::None;
 			this->throwButton->BackColor = System::Drawing::SystemColors::Control;
+			this->throwButton->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
 			this->throwButton->Location = System::Drawing::Point(325, 62);
 			this->throwButton->Name = L"throwButton";
 			this->throwButton->Size = System::Drawing::Size(125, 60);
@@ -170,6 +172,10 @@ namespace FarkleUI {
 			//newButton->BackColor = Color::FromArgb(rand() % 256, rand() % 256, rand() % 256);
 			newButton->BackColor = Color::Black;
 			newButton->ForeColor = Color::White;
+			newButton->FlatStyle = FlatStyle::Flat;
+			newButton->FlatAppearance->BorderSize = 0;
+			newButton->FlatAppearance->MouseOverBackColor = Color::LightGray;
+			newButton->FlatAppearance->MouseDownBackColor = Color::DarkGray;
 
 			// Add click handler
 			newButton->Click += gcnew EventHandler(this, &MyForm::DynamicButton_Click);
@@ -179,10 +185,24 @@ namespace FarkleUI {
 	}
 		   System::Void DynamicButton_Click(System::Object^ sender, System::EventArgs^ e) {
 			   Button^ clickedButton = (Button^)sender;
-			   MessageBox::Show(String::Format("You clicked {0} at position ({1}, {2})",
+
+			   /* Test code
+			   * MessageBox::Show(String::Format("You clicked {0} at position ({1}, {2})",
 				   clickedButton->Name,
 				   clickedButton->Location.X,
 				   clickedButton->Location.Y));
+			   */
+
+			   // Set border if adding to selection, else remove border to deselect
+			   if (clickedButton->FlatAppearance->BorderSize == 0)
+			   {
+				   clickedButton->FlatAppearance->BorderSize = 3;
+				   clickedButton->FlatAppearance->BorderColor = Color::LimeGreen;
+			   }
+			   else
+			   {
+				   clickedButton->FlatAppearance->BorderSize = 0;
+			   }
 		   }
 
 	// Determine if new button (die) location intersects with any existing button (die)
