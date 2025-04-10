@@ -48,8 +48,8 @@ namespace FarkleUI {
 	protected:
 
 
-		   System::Collections::Generic::List<System::Windows::Forms::Button^>^ dynamicButtons;
-		   System::Drawing::Rectangle allowedArea;
+		System::Collections::Generic::List<System::Windows::Forms::Button^>^ dynamicButtons;
+		System::Drawing::Rectangle allowedArea;
 	private: System::Windows::Forms::Panel^ diceArea;
 	private: System::Windows::Forms::Button^ againButton;
 
@@ -104,7 +104,7 @@ namespace FarkleUI {
 			this->throwButton->TabIndex = 0;
 			this->throwButton->Text = L"Throw dice!";
 			this->throwButton->UseVisualStyleBackColor = false;
-			this->throwButton->Click += gcnew System::EventHandler(this, &MyForm::diceThrower);
+			this->throwButton->Click += gcnew System::EventHandler(this, &MyForm::throwButton_Click);
 			// 
 			// diceArea
 			// 
@@ -128,6 +128,7 @@ namespace FarkleUI {
 			this->againButton->TabIndex = 3;
 			this->againButton->Text = L"Score and roll again";
 			this->againButton->UseVisualStyleBackColor = false;
+			this->againButton->Click += gcnew System::EventHandler(this, &MyForm::againButton_Click);
 			// 
 			// passButton
 			// 
@@ -238,116 +239,123 @@ namespace FarkleUI {
 		}
 #pragma endregion
 
-	private: System::Void diceThrower(System::Object^ sender, System::EventArgs^ e)
-	{
-		// Remove all existing dynamic buttons
-		for each (Button ^ btn in dynamicButtons) {
-			diceArea->Controls->Remove(btn);
-			// Remove click handler to prevent memory leaks
-			btn->Click -= gcnew EventHandler(this, &MyForm::DynamicButton_Click);
-		}
-		dynamicButtons->Clear();
+    private:
+        System::Void throwButton_Click(System::Object^ sender, System::EventArgs^ e)
+        {
+            // Update control buttons
+            throwButton->Enabled = false;
+            againButton->Enabled = true;
+            passButton->Enabled = true;
 
-		// Create new buttons (dice)
-		for (int i = 0; i < 6; i++)
-		{
-			Button^ newButton = gcnew Button();
-			newButton->Size = System::Drawing::Size(90, 90);
-			diceArea->Controls->Add(newButton);
+            // Call the dice thrower function
+            DiceThrower();
+        }
 
-			// Try to find a non-overlapping position
-			Point newPos;
-			bool posFound = false;
-			int attempts = 0;
-			const int maxAttempts = 100; //  Seems to work fine as low as 10, but 100 is a safe bet without risking being too slow
+    private:
+        void DiceThrower()
+        {
+            // Remove all existing dynamic buttons
+            for each (Button ^ btn in dynamicButtons) {
+                diceArea->Controls->Remove(btn);
+                // Remove click handler to prevent memory leaks
+                btn->Click -= gcnew EventHandler(this, &MyForm::DynamicButton_Click);
+            }
+            dynamicButtons->Clear();
 
-			do {
-				// Calc random position within panel
-				newPos = Point(
-					rand() % (diceArea->Width - newButton->Width),
-					rand() % (diceArea->Height - newButton->Height)
-				);
+            // Create new buttons (dice)
+            for (int i = 0; i < 6; i++)
+            {
+                Button^ newButton = gcnew Button();
+                newButton->Size = System::Drawing::Size(90, 90);
+                diceArea->Controls->Add(newButton);
 
-				// Check if position is valid (non-overlapping)
-				posFound = !IsOverlapping(newButton, newPos);
-				attempts++;
+                // Try to find a non-overlapping position
+                Point newPos;
+                bool posFound = false;
+                int attempts = 0;
+                const int maxAttempts = 100;
 
-			} while (!posFound && attempts < maxAttempts);
+                do {
+                    // Calc random position within panel
+                    newPos = Point(
+                        rand() % (diceArea->Width - newButton->Width),
+                        rand() % (diceArea->Height - newButton->Height)
+                    );
 
-			if (!posFound)
-			{
-				// Couldn't find non-overlap position
-				MessageBox::Show("Couldn't place all buttons without overlapping!");
-				delete newButton;
-				continue;
-			}
+                    // Check if position is valid (non-overlapping)
+                    posFound = !IsOverlapping(newButton, newPos);
+                    attempts++;
 
-			// Set button properties
-			newButton->Name = String::Format("button{0}", dynamicButtons->Count);
-			newButton->Location = newPos;
-			newButton->Text = String::Format("{0}", rand() % 6 + 1);
-			newButton->Font = gcnew System::Drawing::Font(
-				newButton->Font->FontFamily, // Same font family
-				20.0f, // Font size
-				newButton->Font->Style // Keep same style
-			);
-			//newButton->BackColor = Color::FromArgb(rand() % 256, rand() % 256, rand() % 256);
-			newButton->BackColor = Color::Black;
-			newButton->ForeColor = Color::White;
-			newButton->FlatStyle = FlatStyle::Flat;
-			newButton->FlatAppearance->BorderSize = 0;
-			newButton->FlatAppearance->MouseOverBackColor = Color::LightGray;
-			newButton->FlatAppearance->MouseDownBackColor = Color::DarkGray;
+                } while (!posFound && attempts < maxAttempts);
 
-			// Add click handler
-			newButton->Click += gcnew EventHandler(this, &MyForm::DynamicButton_Click);
+                if (!posFound)
+                {
+                    // Couldn't find non-overlap position
+                    MessageBox::Show("Couldn't place all buttons without overlapping!");
+                    delete newButton;
+                    continue;
+                }
 
-			dynamicButtons->Add(newButton);
+                // Set button properties
+                newButton->Name = String::Format("button{0}", dynamicButtons->Count);
+                newButton->Location = newPos;
+                newButton->Text = String::Format("{0}", rand() % 6 + 1);
+                newButton->Font = gcnew System::Drawing::Font(
+                    newButton->Font->FontFamily,
+                    20.0f,
+                    newButton->Font->Style
+                );
+                newButton->BackColor = Color::Black;
+                newButton->ForeColor = Color::White;
+                newButton->FlatStyle = FlatStyle::Flat;
+                newButton->FlatAppearance->BorderSize = 0;
+                newButton->FlatAppearance->MouseOverBackColor = Color::LightGray;
+                newButton->FlatAppearance->MouseDownBackColor = Color::DarkGray;
 
-			// Update control buttons
-			throwButton->Enabled = false;
-			againButton->Enabled = true;
-			passButton->Enabled = true;
-		}
-	}
+                // Add click handler - fixed signature
+                newButton->Click += gcnew EventHandler(this, &MyForm::DynamicButton_Click);
 
-	System::Void DynamicButton_Click(System::Object^ sender, System::EventArgs^ e) {
-		Button^ clickedButton = (Button^)sender;
+                dynamicButtons->Add(newButton);
+            }
+        }
 
-		/* Test code
-		* MessageBox::Show(String::Format("You clicked {0} at position ({1}, {2})",
-			clickedButton->Name,
-			clickedButton->Location.X,
-			clickedButton->Location.Y));
-		*/
+    private:
+        System::Void DynamicButton_Click(System::Object^ sender, System::EventArgs^ e) {
+            Button^ clickedButton = (Button^)sender;
 
-		// Set border if adding to selection, else remove border to deselect
-		if (clickedButton->FlatAppearance->BorderSize == 0)
-		{
-			clickedButton->FlatAppearance->BorderSize = 3;
-			clickedButton->FlatAppearance->BorderColor = Color::LimeGreen;
-		}
-		else
-		{
-			clickedButton->FlatAppearance->BorderSize = 0;
-		}
-	}
+            // Set border if adding to selection, else remove border to deselect
+            if (clickedButton->FlatAppearance->BorderSize == 0)
+            {
+                clickedButton->FlatAppearance->BorderSize = 3;
+                clickedButton->FlatAppearance->BorderColor = Color::LimeGreen;
+            }
+            else
+            {
+                clickedButton->FlatAppearance->BorderSize = 0;
+            }
+        }
 
-	// Determine if new button (die) location intersects with any existing button (die)
-	private: bool IsOverlapping(Button^ newButton, Point proposedLocation)
-	{
-		Rectangle newRect = Rectangle(proposedLocation, newButton->Size);
+    private:
+        bool IsOverlapping(Button^ newButton, Point proposedLocation)
+        {
+            Rectangle newRect = Rectangle(proposedLocation, newButton->Size);
 
-		// Check against all existing buttons
-		for each(Button ^ existingButton in dynamicButtons)
-		{
-			Rectangle existingRect = Rectangle(existingButton->Location, existingButton->Size);
-			if (newRect.IntersectsWith(existingRect))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	};
+            // Check against all existing buttons
+            for each (Button ^ existingButton in dynamicButtons)
+            {
+                Rectangle existingRect = Rectangle(existingButton->Location, existingButton->Size);
+                if (newRect.IntersectsWith(existingRect))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+    private:
+        System::Void againButton_Click(System::Object^ sender, System::EventArgs^ e) {
+            // Call the dice thrower function directly
+            DiceThrower();
+        }
+    };
 }
