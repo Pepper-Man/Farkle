@@ -134,13 +134,36 @@ namespace FarkleUI {
 			newButton->Size = System::Drawing::Size(80, 40);
 			diceArea->Controls->Add(newButton);
 
-			// Then calculate positions relative to panel:
-			int x = rand() % (diceArea->Width - newButton->Width);
-			int y = rand() % (diceArea->Height - newButton->Height);
+			// Try to find a non-overlapping position
+			Point newPos;
+			bool posFound = false;
+			int attempts = 0;
+			const int maxAttempts = 100; //  Seems to work fine as low as 10, but 100 is a safe bet without risking being too slow
+
+			do {
+				// Calc random position within panel
+				newPos = Point(
+					rand() & (diceArea->Width - newButton->Width),
+					rand() % (diceArea->Height - newButton->Height)
+				);
+
+				// Check if position is valid (non-overlapping)
+				posFound = !IsOverlapping(newButton, newPos);
+				attempts++;
+
+			} while (!posFound && attempts < maxAttempts);
+
+			if (!posFound)
+			{
+				// Couldn't find non-overlap position
+				MessageBox::Show("Couldn't place all buttons without overlapping!");
+				delete newButton;
+				continue;
+			}
 
 			// Set button properties
 			newButton->Name = String::Format("button{0}", dynamicButtons->Count);
-			newButton->Location = System::Drawing::Point(x, y);
+			newButton->Location = newPos;
 			newButton->Size = System::Drawing::Size(100, 50);
 			newButton->Text = String::Format("{0}", rand() % 6 + 1);
 			newButton->BackColor = Color::FromArgb(rand() % 256, rand() % 256, rand() % 256);
@@ -159,6 +182,21 @@ namespace FarkleUI {
 				   clickedButton->Location.Y));
 		   }
 
+	// Determine if new button (die) location intersects with any existing button (die)
+	private: bool IsOverlapping(Button^ newButton, Point proposedLocation)
+	{
+		Rectangle newRect = Rectangle(proposedLocation, newButton->Size);
 
+		// Check against all existing buttons
+		for each(Button ^ existingButton in dynamicButtons)
+		{
+			Rectangle existingRect = Rectangle(existingButton->Location, existingButton->Size);
+			if (newRect.IntersectsWith(existingRect))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 	};
 }
