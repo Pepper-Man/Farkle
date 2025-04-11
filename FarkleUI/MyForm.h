@@ -3,6 +3,7 @@
 #include <stdlib.h> // For rand()
 #include <time.h> // For time()
 #include <vector>
+#include <msclr/marshal_cppstd.h> // For image resources
 
 namespace FarkleUI {
 
@@ -12,6 +13,8 @@ namespace FarkleUI {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+
+	System::Drawing::Bitmap^ LoadResourceImage(String^ name);
 
 	/// <summary>
 	/// Summary for MyForm
@@ -254,6 +257,16 @@ namespace FarkleUI {
     private:
         void DiceThrower()
         {
+			// Load dice images
+			array<System::Drawing::Bitmap^>^ diceImages = {
+				LoadResourceImage("die_1"),
+				LoadResourceImage("die_2"),
+				LoadResourceImage("die_3"),
+				LoadResourceImage("die_4"),
+				LoadResourceImage("die_5"),
+				LoadResourceImage("die_6")
+			};
+
             // Remove all existing dynamic buttons
             for each (Button ^ btn in dynamicButtons) {
                 diceArea->Controls->Remove(btn);
@@ -296,21 +309,31 @@ namespace FarkleUI {
                     continue;
                 }
 
+				int dieValue = rand() % 6 + 1;
+
                 // Set button properties
                 newButton->Name = String::Format("button{0}", dynamicButtons->Count);
                 newButton->Location = newPos;
-                newButton->Text = String::Format("{0}", rand() % 6 + 1);
                 newButton->Font = gcnew System::Drawing::Font(
                     newButton->Font->FontFamily,
                     20.0f,
                     newButton->Font->Style
                 );
-                newButton->BackColor = Color::Black;
-                newButton->ForeColor = Color::White;
+                newButton->BackColor = Color::Transparent;
+                newButton->ForeColor = Color::Transparent;
                 newButton->FlatStyle = FlatStyle::Flat;
                 newButton->FlatAppearance->BorderSize = 0;
                 newButton->FlatAppearance->MouseOverBackColor = Color::LightGray;
                 newButton->FlatAppearance->MouseDownBackColor = Color::DarkGray;
+
+				// Set image to correct die value texture
+				if (diceImages[dieValue - 1] == nullptr)
+				{
+					MessageBox::Show("Image failed to load!");
+				}
+
+				newButton->BackgroundImage = diceImages[dieValue - 1];
+				newButton->BackgroundImageLayout = ImageLayout::Stretch;
 
                 // Add click handler - fixed signature
                 newButton->Click += gcnew EventHandler(this, &MyForm::DynamicButton_Click);
@@ -338,12 +361,12 @@ namespace FarkleUI {
     private:
         bool IsOverlapping(Button^ newButton, Point proposedLocation)
         {
-            Rectangle newRect = Rectangle(proposedLocation, newButton->Size);
+			System::Drawing::Rectangle newRect = System::Drawing::Rectangle(proposedLocation, newButton->Size);
 
             // Check against all existing buttons
             for each (Button ^ existingButton in dynamicButtons)
             {
-                Rectangle existingRect = Rectangle(existingButton->Location, existingButton->Size);
+				System::Drawing::Rectangle existingRect = System::Drawing::Rectangle(existingButton->Location, existingButton->Size);
                 if (newRect.IntersectsWith(existingRect))
                 {
                     return true;
